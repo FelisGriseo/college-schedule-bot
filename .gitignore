@@ -7,6 +7,6 @@ __pycache__/
 *.db
 *.db-shm
 *.db-wal
-college_schedule_2026_2027.xlsx
+*.xlsx
 .pytest_cache/
 .ruff_cache/

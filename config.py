@@ -4,7 +4,20 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+PROJECT_ROOT = Path(__file__).resolve().parent
+load_dotenv(PROJECT_ROOT / ".env")
+
+
+def _project_path(value: str, fallback: str) -> Path:
+    path = Path(value or fallback)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    if path.exists():
+        return path
+    double_extension = Path(f"{path}.xlsx")
+    if path.suffix.lower() == ".xlsx" and double_extension.exists():
+        return double_extension
+    return path
 
 
 @dataclass(frozen=True)
@@ -21,6 +34,7 @@ class Settings:
     session_name: str
     ocr_backend: str
     ocr_enabled: bool
+    backfill_days: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -36,17 +50,19 @@ class Settings:
             database_url=os.getenv(
                 "DATABASE_URL", "sqlite+aiosqlite:///./college_schedule.db"
             ),
-            schedule_file=Path(
+            schedule_file=_project_path(
                 os.getenv(
                     "BASE_SCHEDULE_FILE",
                     os.getenv("SCHEDULE_FILE", "college_schedule_2026_2027.xlsx"),
-                )
+                ),
+                "college_schedule_2026_2027.xlsx",
             ),
-            output_schedule_file=Path(
+            output_schedule_file=_project_path(
                 os.getenv(
                     "OUTPUT_SCHEDULE_FILE",
                     "college_with_replacements_schedule_2026_2027.xlsx",
-                )
+                ),
+                "college_with_replacements_schedule_2026_2027.xlsx",
             ),
             timezone=os.getenv("TIMEZONE", "Europe/Kyiv"),
             api_id=int(os.getenv("API_ID", "0")) or None,
@@ -54,4 +70,5 @@ class Settings:
             session_name=os.getenv("SESSION_NAME", "schedule_monitor"),
             ocr_backend=os.getenv("OCR_BACKEND", "none").lower(),
             ocr_enabled=os.getenv("OCR_ENABLED", "false").lower() == "true",
+            backfill_days=max(0, int(os.getenv("BACKFILL_DAYS", "30"))),
         )

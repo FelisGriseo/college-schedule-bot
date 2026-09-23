@@ -8,7 +8,7 @@ from services.replacement_processor import process_replacement_text
 router = Router(name="channel_listener")
 
 
-def build_channel_router(settings: Settings, session_factory, bot: Bot) -> Router:
+def build_channel_router(settings: Settings, session_factory, bot: Bot, schedule) -> Router:
     channel_router = Router(name="channel_posts")
 
     @channel_router.channel_post()
@@ -28,6 +28,8 @@ def build_channel_router(settings: Settings, session_factory, bot: Bot) -> Route
         parsed = parse_replacements(text)
         if not parsed:
             return
-        await process_replacement_text(text, message.message_id, session_factory, bot)
+        await process_replacement_text(
+            text, message.message_id, session_factory, bot, schedule=schedule
+        )
 
     return channel_router

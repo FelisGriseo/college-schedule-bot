@@ -13,6 +13,12 @@ class Database:
     async def create_tables(self) -> None:
         async with self.engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
+            columns = await connection.exec_driver_sql("PRAGMA table_info(replacements)")
+            names = {row[1] for row in columns.fetchall()}
+            if "match_status" not in names:
+                await connection.exec_driver_sql(
+                    "ALTER TABLE replacements ADD COLUMN match_status VARCHAR(20) NOT NULL DEFAULT 'matched'"
+                )
 
     async def session(self) -> AsyncIterator[AsyncSession]:
         async with self.session_factory() as session:
